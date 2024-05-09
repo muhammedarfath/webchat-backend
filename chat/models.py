@@ -3,6 +3,15 @@ from django.db import models
 
 # Create your models here.
 
+
+
+
+
+
+
+
+
+
 class Message(models.Model):
     author = models.ForeignKey(User,related_name='author_messages',on_delete=models.CASCADE)
     content = models.TextField()
