@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.db.models.signals import post_save
 from django.db import models
 
 # Create your models here.
@@ -37,3 +38,12 @@ class Message(models.Model):
     
     def last_10_messages():
         return Message.objects.order_by('timestamp').all()[:100]
+    
+    
+    
+def created_user_profile(sender,instance,created,**kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+    
+    
+post_save.connect(created_user_profile,sender=User)      

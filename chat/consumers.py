@@ -1,6 +1,6 @@
 # chat/consumers.py
 import json
-from django.contrib.auth.models import User
+from .models import User
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from .models import Message
