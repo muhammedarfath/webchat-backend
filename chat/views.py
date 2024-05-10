@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User
+from .models import Profile, User
 from rest_framework_simplejwt.tokens import RefreshToken
  
 def index(request):
@@ -42,5 +42,9 @@ class LoginView(APIView):
 
                  
 
-def room(request, room_name):
-    return render(request, "chat/room.html", {"room_name": room_name,"username":request.user.username})
+class RoomView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, room_name):
+        user_id = request.data.get('user_id')
+        user = Profile.objects.get(user=user_id)
+        return Response({"room_name": room_name, "user_id": user.id,"username":user.user.username,"email":user.user.email,})
