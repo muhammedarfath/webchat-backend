@@ -6,11 +6,25 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Profile, User
 from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import UserDetailsSerializer,UsersSerializer
  
-def index(request):
-    return render(request, "chat/index.html")
+class Users(APIView):
+    parser_classes = [ AllowAny]
+    def get(self,request):
+        profile = Profile.objects.all()
+        serializer = UserDetailsSerializer(profile,many=True)     
+        return Response(serializer.data)
+    
 
-
+class SignUpView(APIView):
+    permission_classes = [AllowAny]
+    def post(self,request):
+        serializer = UsersSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -45,6 +59,6 @@ class LoginView(APIView):
 class RoomView(APIView):
     permission_classes = [AllowAny]
     def post(self, request, room_name):
-        user_id = request.data.get('user_id')
+        user_id = request.data.get('id')
         user = Profile.objects.get(user=user_id)
-        return Response({"room_name": room_name, "user_id": user.id,"username":user.user.username,"email":user.user.email,})
+        return Response({"room_name": room_name, "user_id": user.id,"username":user.user.username,"email":user.user.email,"image":user.image})
