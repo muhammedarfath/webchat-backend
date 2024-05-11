@@ -9,12 +9,19 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserDetailsSerializer,UsersSerializer
  
 class Users(APIView):
-    parser_classes = [ AllowAny]
-    def get(self,request):
-        profile = Profile.objects.all()
-        serializer = UserDetailsSerializer(profile,many=True)     
-        return Response(serializer.data)
-    
+    permission_classes = [ AllowAny]
+    def post(self,request):
+        current_user = request.data.get('current_userId')
+        if current_user is not None:
+            try:
+                profiles = Profile.objects.all().exclude(user=current_user)
+                serializer = UserDetailsSerializer(profiles,many=True)     
+                return Response(serializer.data)
+            except Profile.DoesNotExist:
+                return Response({"error": "Current user profile not found."}, status=404)
+        else:
+            return Response({"error": "current_userId not provided in request data."}, status=400) 
+           
 
 class SignUpView(APIView):
     permission_classes = [AllowAny]
