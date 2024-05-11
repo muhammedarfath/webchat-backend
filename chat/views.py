@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Profile, User
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserDetailsSerializer,UsersSerializer
+from .serializers import UserDetailsSerializer,UsersSerializer,ProfileSerializer
  
 class Users(APIView):
     permission_classes = [ AllowAny]
@@ -61,8 +61,19 @@ class LoginView(APIView):
         }
         return Response(response_data,status=status.HTTP_200_OK)
 
-                 
+class EditProfile(APIView):
+    permission_classes = [AllowAny]
 
+    def post(self, request, id):
+        profile = get_object_or_404(Profile, user=id)
+        serializer = ProfileSerializer(instance=profile, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        
 class RoomView(APIView):
     permission_classes = [AllowAny]
     def post(self, request, room_name):
