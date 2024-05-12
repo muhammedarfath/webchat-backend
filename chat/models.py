@@ -38,7 +38,7 @@ post_save.connect(created_user_profile,sender=User)
 class Message(models.Model):
     author = models.ForeignKey(User,related_name='user',on_delete=models.CASCADE)
     sender = models.ForeignKey(User,related_name='sender',on_delete=models.CASCADE,blank=True, null=True)
-    receiver = models.ForeignKey(User,related_name='receiver',on_delete=models.CASCADE,blank=True, null=True)
+    reciever = models.ForeignKey(User,related_name='receiver',on_delete=models.CASCADE,blank=True, null=True)
     content = models.TextField()
     is_read = models.BooleanField(default=False,blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)

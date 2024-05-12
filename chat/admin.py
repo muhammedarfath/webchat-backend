@@ -6,7 +6,7 @@ from .models import Profile,User,Message
 
 class ChatMessageAdmin(admin.ModelAdmin):
     list_editable = ['is_read']
-    list_display = ['sender','receiver','content','is_read']
+    list_display = ['sender','reciever','content','is_read']
 
 admin.site.register(Profile)
 admin.site.register(User)

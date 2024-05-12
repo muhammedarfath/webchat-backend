@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import LoginView,RoomView,Users,SignUpView,EditProfile,MyChat
+from .views import LoginView,RoomView,Users,SignUpView,EditProfile,MyChat,GetMessages
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -14,5 +14,6 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('edit/<int:id>/',EditProfile.as_view(),name='edit'),
     path('my_messages/<int:user_id>/',MyChat.as_view(),name='my_messages'),
+    path('get_messages/<int:sender_id>/<int:reciever_id>/',GetMessages.as_view(),name='get_messages'),
 
 ]
