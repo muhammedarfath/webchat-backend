@@ -4,10 +4,11 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Profile, User
+from .models import Profile, User,Message
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserDetailsSerializer,UsersSerializer,ProfileSerializer
- 
+from .serializers import UserDetailsSerializer,UsersSerializer,ProfileSerializer,MessageSerializer
+from django.db.models import OuterRef, Subquery, Q
+
 class Users(APIView):
     permission_classes = [ AllowAny]
     def post(self,request):
@@ -87,3 +88,27 @@ class RoomView(APIView):
                 return Response({"error": "Current user profile not found."}, status=404)
         else:     
            return Response({"error": "current_userId not provided in request data."}, status=400) 
+
+
+class MyChat(APIView):
+    serializer_class = MessageSerializer
+    
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']
+         
+        messages = Message.objects.filter(
+            id__in=Subquery(
+                User.objects.filter(
+                    Q(sender_reciever=user_id) |
+                    Q(reciever_sender=user_id)
+                ).distinct().annotate(
+                    last_msg=Subquery(
+                        Message.objects.filter(
+                            Q(sender=OuterRef('id'), reciever=user_id) |
+                            Q(reciever=OuterRef('id'), sender=user_id)
+                        ).order_by("-id")[:1].values_list("id",flat=True)
+                    )
+                ).values_list("last_msg",flat=True).order_by("-id")
+            )
+        ).order_by("-id")
+        return messages

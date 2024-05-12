@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User , Profile
+from .models import User , Profile,Message
 
 
 class UsersSerializer(serializers.ModelSerializer):
@@ -36,3 +36,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             instance.image = validated_data.get('image', instance.image)
         instance.save()
         return instance
+    
+   
+   
+class MessageSerializer(serializers.ModelSerializer):
+    sender_profile = ProfileSerializer(read_only=True)
+    receiver_profile = ProfileSerializer(read_only=True)
+    class Meta:
+        model = Message
+        fields = ['id','user','sender','sender_profile','receiver_profile','receiver','content','is_read','timestamp']
+    
