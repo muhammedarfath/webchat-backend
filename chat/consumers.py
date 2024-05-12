@@ -70,7 +70,6 @@ class ChatConsumer(WebsocketConsumer):
 
 
 
-
     def receive(self, text_data):
         data = json.loads(text_data)
         self.commands[data['command']](self, data)
