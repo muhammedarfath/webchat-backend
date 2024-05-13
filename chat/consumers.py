@@ -9,7 +9,10 @@ from .models import Message
 class ChatConsumer(WebsocketConsumer):
     
     def fetch_messages(self,data):
-        messages = Message.last_10_messages()
+        print('7')
+        author_id, recipient_id = self.room_name.split('_')
+        messages = Message.messages_for_room(author_id, recipient_id)
+
         content = {
             'command':'messages',
             'messages':self.messages_to_json(messages)
@@ -18,9 +21,11 @@ class ChatConsumer(WebsocketConsumer):
         
     
     def new_message(self,data):
-        author = data['from']
-        author_user = User.objects.filter(username=author)[0]
-        message = Message.objects.create(author=author_user,content=data['message'])
+        print('8')
+        author_id, recipient_id = self.room_name.split('_')
+        author_user = User.objects.get(id=author_id)
+        sender_user = User.objects.get(id=recipient_id)
+        message = Message.objects.create(author=author_user,recipient=sender_user,content=data['message'])
         content = {
             'command':'new_message',
             'message':self.message_to_json(message)
@@ -30,6 +35,7 @@ class ChatConsumer(WebsocketConsumer):
     
     
     def messages_to_json(self,messages):
+        print('9')
         result = []
         for message in messages:
             result.append(self.message_to_json(message))
@@ -37,8 +43,10 @@ class ChatConsumer(WebsocketConsumer):
     
     
     def message_to_json(self,message):
+        print('10')
         return {
             'author':message.author.username,
+            'recipient':message.recipient.username,
             'content':message.content,
             'timestamp':str(message.timestamp)
             
@@ -53,8 +61,10 @@ class ChatConsumer(WebsocketConsumer):
     
     def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = f"chat_{self.room_name}"
-
+        sender_id, recipient_id = self.room_name.split('_')
+         #creating room 
+        self.room_group_name = f"chat_{min(sender_id, recipient_id)}_{max(sender_id, recipient_id)}"
+        print(self.room_group_name,"this is group")
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name, self.channel_name
@@ -63,6 +73,7 @@ class ChatConsumer(WebsocketConsumer):
         self.accept()
 
     def disconnect(self, close_code):
+        print('2')
         # Leave room group
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name, self.channel_name
@@ -71,6 +82,7 @@ class ChatConsumer(WebsocketConsumer):
 
 
     def receive(self, text_data):
+        print('3')
         data = json.loads(text_data)
         self.commands[data['command']](self, data)
         
@@ -78,18 +90,21 @@ class ChatConsumer(WebsocketConsumer):
         
         
         
-    def send_chat_message(self,message):    
+    def send_chat_message(self,message): 
+        print('4')   
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name, {"type": "chat.message", "message": message}
         )
 
 
     def send_message(self,message):
+        print('5')
         self.send(text_data=json.dumps( message))
         
     
     
     
     def chat_message(self, event):
+        print('6')
         message = event["message"]
         self.send(text_data=json.dumps( message))
