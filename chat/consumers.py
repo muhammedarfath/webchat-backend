@@ -98,7 +98,7 @@ class ChatConsumer(WebsocketConsumer):
 
 
     def send_message(self,message):
-        print('5')
+
         self.send(text_data=json.dumps( message))
         
     

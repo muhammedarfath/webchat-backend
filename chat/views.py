@@ -14,13 +14,35 @@ class Users(APIView):
         current_user = request.data.get('current_userId')
         if current_user is not None:
             try:
-                profiles = Profile.objects.all().exclude(user=current_user)
-                serializer = UserDetailsSerializer(profiles,many=True)     
-                return Response(serializer.data)
+                current_profile = Profile.objects.get(id=current_user)
+                if current_profile.followers.exists():
+                    profiles = Profile.objects.all().exclude(user=current_user)
+                    serializer = UserDetailsSerializer(profiles,many=True)     
+                    return Response(serializer.data)
+                else:
+                    return Response([])
             except Profile.DoesNotExist:
                 return Response({"error": "Current user profile not found."}, status=404)
         else:
             return Response({"error": "current_userId not provided in request data."}, status=400) 
+        
+        
+        
+class Suggested(APIView):
+    permission_classes = [ AllowAny]
+    def post(self,request):
+        current_user = request.data.get('current_userId')
+        if current_user is not None:
+            try:
+                profiles = Profile.objects.all().exclude(user=current_user)
+                serializer = UserDetailsSerializer(profiles,many=True)     
+                return Response(serializer.data)
+
+            except Profile.DoesNotExist:
+                return Response({"error": "Current user profile not found."}, status=404)
+        else:
+            return Response({"error": "current_userId not provided in request data."}, status=400) 
+                   
            
 
 class SignUpView(APIView):
@@ -45,6 +67,7 @@ class LoginView(APIView):
         else:
             try:
                 user = User.objects.get(username=username)
+                
             except User.DoesNotExist:
                 return Response({'error':"invalid cridentials"},status=status.HTTP_401_UNAUTHORIZED) 
         if not user.check_password(password):

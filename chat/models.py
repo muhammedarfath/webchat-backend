@@ -21,7 +21,8 @@ class Profile(models.Model):
     full_name = models.CharField(max_length=300)
     bio = models.CharField(max_length=300)
     image = models.ImageField(upload_to='user_images', blank=True, null=True)
-    
+    followers = models.ManyToManyField(User, related_name='followers', blank=True)
+
     def __str__(self):
         return self.user.username
     
@@ -30,6 +31,7 @@ class Profile(models.Model):
 
 class Message(models.Model):
     author = models.ForeignKey(User,related_name='sent_messages',on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE,null=True)
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages',null=True)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -42,7 +44,7 @@ class Message(models.Model):
         return cls.objects.filter(
             Q(author_id=author_id, recipient_id=recipient_id) |
             Q(author_id=recipient_id, recipient_id=author_id)
-        ).order_by('-timestamp')[:10]
+        ).order_by('timestamp')[:100]
     
 def created_user_profile(sender,instance,created,**kwargs):
     if created:
