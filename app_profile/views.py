@@ -16,7 +16,6 @@ class UserProfile(APIView):
         try:
             if user_name:
                 profile = Profile.objects.get(user__username=user_name)
-                print(profile,"ussssssss")
                 serializer = UserDetailsSerializer(profile)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
