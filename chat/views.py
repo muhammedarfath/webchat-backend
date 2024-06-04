@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Profile, User
+from .models import Message, Profile, User
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserDetailsSerializer,UsersSerializer,ProfileSerializer
 
@@ -16,14 +16,17 @@ class Users(APIView):
         current_user_id = request.data.get('current_userId')
         if current_user_id is not None:
             try:
-                current_profile = Profile.objects.get(user__id=current_user_id)
-                if current_profile.followers.exists():
-                    profiles = current_profile.followers.all()
+                messages = Message.objects.filter(recipient=current_user_id)
+                if messages.exists():
                     serialized_profiles = []
-                    for user in profiles:
-                        profile = Profile.objects.get(user=user)
-                        serialized_profiles.append(UserDetailsSerializer(profile).data)
-                    return Response(serialized_profiles)
+                    message_users = set()
+                    for message in messages:
+                        author = message.author
+                        if author.id not in message_users:
+                            profile = Profile.objects.get(user=author)
+                            serialized_profiles.append(UserDetailsSerializer(profile).data)
+                            message_users.add(author.id)
+                    return Response(serialized_profiles, status=status.HTTP_200_OK)
                 else:
                     return Response([], status=status.HTTP_204_NO_CONTENT)
             except Profile.DoesNotExist:
