@@ -52,6 +52,7 @@ class Suggested(APIView):
                 return Response({"error": "Current user profile not found."}, status=404)
         else:
             return Response({"error": "current_userId not provided in request data."}, status=400) 
+ 
                    
 class FollowRequest(APIView):
     permission_classes = [AllowAny]
