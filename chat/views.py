@@ -7,6 +7,7 @@ from rest_framework import status
 from .models import Message, Profile, User
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserDetailsSerializer,UsersSerializer,ProfileSerializer
+from django.db.models import Q
 
 
 class Users(APIView):
@@ -16,16 +17,19 @@ class Users(APIView):
         current_user_id = request.data.get('current_userId')
         if current_user_id is not None:
             try:
-                messages = Message.objects.filter(recipient=current_user_id)
+                messages = Message.objects.filter(
+                    Q(author_id=current_user_id) | Q(recipient_id=current_user_id)
+                )
                 if messages.exists():
                     serialized_profiles = []
                     message_users = set()
                     for message in messages:
-                        author = message.author
-                        if author.id not in message_users:
-                            profile = Profile.objects.get(user=author)
-                            serialized_profiles.append(UserDetailsSerializer(profile).data)
-                            message_users.add(author.id)
+                        participants = [message.author, message.recipient]
+                        for participant in participants:
+                            if participant and participant.id != current_user_id and participant.id not in message_users:
+                                profile = Profile.objects.get(user=participant)
+                                serialized_profiles.append(UserDetailsSerializer(profile).data)
+                                message_users.add(participant.id)
                     return Response(serialized_profiles, status=status.HTTP_200_OK)
                 else:
                     return Response([], status=status.HTTP_204_NO_CONTENT)
@@ -52,7 +56,6 @@ class Suggested(APIView):
                 return Response({"error": "Current user profile not found."}, status=404)
         else:
             return Response({"error": "current_userId not provided in request data."}, status=400) 
- 
                    
 class FollowRequest(APIView):
     permission_classes = [AllowAny]
