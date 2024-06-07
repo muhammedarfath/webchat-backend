@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Profile,User,Message
+from .models import Profile,User,Message,Notification
 
 # Register your models here.
 
@@ -10,4 +10,5 @@ class ChatMessage(admin.ModelAdmin):
     
 admin.site.register(Profile)
 admin.site.register(User)
+admin.site.register(Notification)
 admin.site.register(Message,ChatMessage)

@@ -4,10 +4,13 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Message, Profile, User
+from .models import Message, Notification, Profile, User
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserDetailsSerializer,UsersSerializer,ProfileSerializer
 from django.db.models import Q
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 
 
 class Users(APIView):
@@ -56,7 +59,7 @@ class Suggested(APIView):
                 return Response({"error": "Current user profile not found."}, status=404)
         else:
             return Response({"error": "current_userId not provided in request data."}, status=400) 
-                   
+        
 class FollowRequest(APIView):
     permission_classes = [AllowAny]
 
@@ -72,7 +75,22 @@ class FollowRequest(APIView):
 
                 current_profile.following.add(friend_profile.user)
                 friend_profile.followers.add(current_profile.user)
+                
 
+                # message = f"{current_profile.user.username} has requested to follow you."
+                # notfy=Notification.objects.create(user=friend_profile.user,message=message)
+                # notfy.save()
+
+                # async_to_sync(channel_layer.group_send)(
+                #     room_group_name,
+                #     {
+                    
+                #         'type': 'follow_notification',
+                #         'message': message,
+                    
+                #     }
+                # )
+                
 
                 serializer = ProfileSerializer(friend_profile)
                 return Response(serializer.data, status=status.HTTP_200_OK)

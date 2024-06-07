@@ -27,7 +27,21 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
     
+    
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    message = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.message
+    
+    @classmethod
+    def notification_for_room(cls, user_id):
+        return cls.objects.filter(
+            user_id=user_id
+        ).order_by('timestamp')[:100]
 
 
 class Message(models.Model):

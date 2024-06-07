@@ -126,6 +126,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'webchat.wsgi.application'
+
 ASGI_APPLICATION = "webchat.asgi.application"
 CHANNEL_LAYERS = {
     "default": {
