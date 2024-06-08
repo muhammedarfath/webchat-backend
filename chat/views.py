@@ -49,9 +49,12 @@ class Suggested(APIView):
     permission_classes = [ AllowAny]
     def post(self,request):
         current_user = request.data.get('current_userId')
+        search_query = request.data.get('search_query', '')
         if current_user is not None:
             try:
                 profiles = Profile.objects.all().exclude(user=current_user)
+                if search_query:
+                    profiles = profiles.filter(user__username__icontains=search_query)
                 serializer = UserDetailsSerializer(profiles,many=True)     
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -59,6 +62,10 @@ class Suggested(APIView):
                 return Response({"error": "Current user profile not found."}, status=404)
         else:
             return Response({"error": "current_userId not provided in request data."}, status=400) 
+
+
+
+
         
 class FollowRequest(APIView):
     permission_classes = [AllowAny]
@@ -75,22 +82,7 @@ class FollowRequest(APIView):
 
                 current_profile.following.add(friend_profile.user)
                 friend_profile.followers.add(current_profile.user)
-                
-
-                # message = f"{current_profile.user.username} has requested to follow you."
-                # notfy=Notification.objects.create(user=friend_profile.user,message=message)
-                # notfy.save()
-
-                # async_to_sync(channel_layer.group_send)(
-                #     room_group_name,
-                #     {
-                    
-                #         'type': 'follow_notification',
-                #         'message': message,
-                    
-                #     }
-                # )
-                
+    
 
                 serializer = ProfileSerializer(friend_profile)
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -143,7 +135,6 @@ class LoginView(APIView):
 
 class EditProfile(APIView):
     permission_classes = [AllowAny]
-
     def post(self, request, id):
         profile = get_object_or_404(Profile, user=id)
         serializer = ProfileSerializer(instance=profile, data=request.data)
