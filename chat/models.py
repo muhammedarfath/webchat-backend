@@ -25,7 +25,7 @@ class Profile(models.Model):
     following = models.ManyToManyField(User, related_name='following', blank=True)
 
     def __str__(self):
-        return self.user.username
+        return self.full_name
     
     
 class Notification(models.Model):
@@ -46,7 +46,6 @@ class Notification(models.Model):
 
 class Message(models.Model):
     author = models.ForeignKey(User,related_name='sent_messages',on_delete=models.CASCADE)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE,null=True)
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages',null=True)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
