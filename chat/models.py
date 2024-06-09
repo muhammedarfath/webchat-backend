@@ -25,7 +25,7 @@ class Profile(models.Model):
     following = models.ManyToManyField(User, related_name='following', blank=True)
 
     def __str__(self):
-        return self.full_name
+        return self.user.username
     
     
 class Notification(models.Model):
@@ -46,7 +46,7 @@ class Notification(models.Model):
 
 class Message(models.Model):
     author = models.ForeignKey(User,related_name='sent_messages',on_delete=models.CASCADE)
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages',null=True)
+    recipient = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='received_messages',null=True)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     
@@ -54,10 +54,10 @@ class Message(models.Model):
         return self.author.username
     
     @classmethod
-    def messages_for_room(cls, author_id, recipient_id):
+    def messages_for_room(cls, author_id, recipient_profile_id):
         return cls.objects.filter(
-            Q(author_id=author_id, recipient_id=recipient_id) |
-            Q(author_id=recipient_id, recipient_id=author_id)
+            Q(author_id=author_id, recipient_id=recipient_profile_id) |
+            Q(author_id=recipient_profile_id, recipient__user_id=author_id)
         ).order_by('timestamp')[:100]
     
 def created_user_profile(sender,instance,created,**kwargs):

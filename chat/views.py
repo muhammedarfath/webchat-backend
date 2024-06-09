@@ -21,13 +21,13 @@ class Users(APIView):
         if current_user_id is not None:
             try:
                 messages = Message.objects.filter(
-                    Q(author_id=current_user_id) | Q(recipient_id=current_user_id)
+                    Q(author_id=current_user_id) | Q(recipient__user_id=current_user_id)
                 )
                 if messages.exists():
                     serialized_profiles = []
                     message_users = set()
                     for message in messages:
-                        participants = [message.author, message.recipient]
+                        participants = [message.author, message.recipient.user]
                         for participant in participants:
                             if participant and participant.id != current_user_id and participant.id not in message_users:
                                 profile = Profile.objects.get(user=participant)

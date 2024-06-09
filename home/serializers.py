@@ -9,3 +9,4 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ['author','recipient', 'content', 'timestamp']
+        depth = 1
