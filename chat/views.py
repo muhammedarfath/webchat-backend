@@ -1,15 +1,12 @@
-from django.shortcuts import get_object_or_404, render
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Message, Notification, Profile, User
-from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserDetailsSerializer,UsersSerializer,ProfileSerializer
+from .models import Message, Profile
+from .serializers import UserDetailsSerializer,ProfileSerializer
 from django.db.models import Q
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+
 
 
 
@@ -46,24 +43,29 @@ class Users(APIView):
         
         
 class Suggested(APIView):
-    permission_classes = [ AllowAny]
-    def post(self,request):
-        current_user = request.data.get('current_userId')
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        current_user_id = request.data.get('current_userId')
         search_query = request.data.get('search_query', '')
-        if current_user is not None:
+        
+        if current_user_id is not None:
             try:
-                profiles = Profile.objects.all().exclude(user=current_user)
+                current_user_profile = Profile.objects.get(user_id=current_user_id)
+                profiles = Profile.objects.exclude(user=current_user_id)
+
+                profiles = profiles.exclude(followers=current_user_profile.user)
+
                 if search_query:
                     profiles = profiles.filter(user__username__icontains=search_query)
-                serializer = UserDetailsSerializer(profiles,many=True)     
+
+                serializer = UserDetailsSerializer(profiles, many=True)
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             except Profile.DoesNotExist:
                 return Response({"error": "Current user profile not found."}, status=404)
         else:
-            return Response({"error": "current_userId not provided in request data."}, status=400) 
-
-
+            return Response({"error": "current_userId not provided in request data."}, status=400)
 
 
         
@@ -93,45 +95,6 @@ class FollowRequest(APIView):
         else:
             return Response({'message': 'Both current_userId and userId are required'}, status=status.HTTP_400_BAD_REQUEST)
             
-
-class SignUpView(APIView):
-    permission_classes = [AllowAny]
-    def post(self,request):
-        serializer = UsersSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-        
-
-class LoginView(APIView):
-    permission_classes = [AllowAny]
-    def post(self,request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        
-        if not username and password:
-            return Response({'error':"fields cannot be empty"},status=status.HTTP_400_BAD_REQUEST)
-
-        else:
-            try:
-                user = User.objects.get(username=username)
-                
-            except User.DoesNotExist:
-                return Response({'error':"invalid cridentials"},status=status.HTTP_401_UNAUTHORIZED) 
-        if not user.check_password(password):
-            return Response({'error':"invalid cridentials"},status=status.HTTP_401_UNAUTHORIZED)  
-        refresh = RefreshToken.for_user(user)
-               
-        response_data = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'username': user.username,
-            'user_id': user.id,
-            'user_email': user.email,
-            'is_superuser': user.is_superuser,
-        }
-        return Response(response_data,status=status.HTTP_200_OK)
 
 class EditProfile(APIView):
     permission_classes = [AllowAny]

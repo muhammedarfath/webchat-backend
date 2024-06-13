@@ -2,13 +2,21 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.db import models
 from django.db.models import Q
+from django.core.validators import RegexValidator
+
 # Create your models here.
 
 
 
 class User(AbstractUser):
-    username = models.CharField(max_length=150,unique=True)
+    username_validator = RegexValidator(
+        regex=r'^[a-zA-Z0-9_]*$',
+        message='Username must be alphanumeric or contain underscores.'
+
+    )
+    username = models.CharField(max_length=150,unique=True,validators=[username_validator])
     email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=15, unique=True,blank=True, null=True)
     
     REQUIRED_FIELDS = ['email']
 
@@ -19,7 +27,7 @@ class User(AbstractUser):
 class Profile(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE)
     full_name = models.CharField(max_length=300)
-    bio = models.CharField(max_length=300)
+    bio = models.CharField(max_length=300,blank=True, null=True)
     image = models.ImageField(upload_to='user_images', blank=True, null=True)
     followers = models.ManyToManyField(User, related_name='followers', blank=True)
     following = models.ManyToManyField(User, related_name='following', blank=True)
@@ -27,6 +35,13 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
     
+def created_user_profile(sender,instance,created,**kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+    
+    
+post_save.connect(created_user_profile,sender=User)      
+
     
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
@@ -60,9 +75,3 @@ class Message(models.Model):
             Q(author_id=recipient_profile_id, recipient__user_id=author_id)
         ).order_by('timestamp')[:100]
     
-def created_user_profile(sender,instance,created,**kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-    
-    
-post_save.connect(created_user_profile,sender=User)      
