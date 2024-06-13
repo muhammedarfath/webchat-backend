@@ -6,29 +6,12 @@ from .serializers import UserRegistrationSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET
-from django.contrib.auth import get_user_model
-from django.http import JsonResponse
 
 # Create your views here.
 
-User = get_user_model()
-
-class CheckUsernameView(APIView):
-    def get(self, request, *args, **kwargs):
-        username = self.request.GET.get('username', None)
-        if not username:
-            return JsonResponse({'error': 'Username parameter is required'}, status=400)
-
-        try:
-            user = User.objects.get(username=username)
-            return JsonResponse({'exists': True})
-        except User.DoesNotExist:
-            return JsonResponse({'exists': False})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-
+        
+        
+        
 class SignUpView(APIView):
     permission_classes = [AllowAny]
     def post(self,request):

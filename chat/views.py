@@ -48,12 +48,10 @@ class Suggested(APIView):
     def post(self, request):
         current_user_id = request.data.get('current_userId')
         search_query = request.data.get('search_query', '')
-        
         if current_user_id is not None:
             try:
                 current_user_profile = Profile.objects.get(user_id=current_user_id)
                 profiles = Profile.objects.exclude(user=current_user_id)
-
                 profiles = profiles.exclude(followers=current_user_profile.user)
 
                 if search_query:
