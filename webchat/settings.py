@@ -145,7 +145,7 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'chatapplication',
+        'NAME': 'onetap',
         'USER': 'postgres',
         'PASSWORD': 1234,
         'HOST': 'localhost', 

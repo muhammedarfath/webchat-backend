@@ -110,10 +110,9 @@ class RoomView(APIView):
     permission_classes = [AllowAny]
     def post(self, request,room_name):
         user_id = request.data.get('user_id')
-        print(user_id,"this is user iddddddd")
         if user_id is not None:
             try:
-                user = Profile.objects.get(user__id=user_id)
+                user = Profile.objects.get(id=user_id)
                 serializer = UserDetailsSerializer(user)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             except Profile.DoesNotExist:
