@@ -8,8 +8,12 @@ from .serializers import UserRegistrationSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.core.mail import message,send_mail
-
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.urls import reverse
+from django.utils.encoding import force_bytes, force_str 
 # Create your views here.
 
         
@@ -107,3 +111,44 @@ class LoginView(APIView):
             'is_superuser': user.is_superuser,
         }
         return Response(response_data,status=status.HTTP_200_OK)
+    
+    
+class ResetPassword(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        try:
+            email = request.data.get("email")
+            user = User.objects.get(email=email)
+            if user:
+                link = f"http://localhost:3000/password-reset-confirm/{user.id}/"
+                send_mail(
+                    'Verify Account',
+                    'Please verify your account',
+                    'fyboxteam@gmail.com',
+                    [email],
+                    fail_silently=False,
+                    html_message=f"<p>Your OTP is </p><p>{link}</p>"
+                )
+                return Response({'message': 'Password reset link has been sent to your email.'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class PasswordResetConfirm(APIView):
+        permission_classes = [AllowAny]
+        def post(self,request,user_id):
+            try:
+                password = request.data.get("password")
+                user = User.objects.get(id=user_id)
+                user.password = " "
+                if user:
+                    user.set_password(password)
+                    user.save()
+                    return Response({'message': 'Password has been changed.'}, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Oops...User not found'}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
