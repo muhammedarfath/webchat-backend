@@ -21,7 +21,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile    
-        fields = ['full_name', 'bio', 'image']
+        fields = ['full_name','date_of_birth', 'bio', 'image']
         
     def update(self, instance, validated_data):
         instance.full_name = validated_data.get('full_name', instance.full_name)

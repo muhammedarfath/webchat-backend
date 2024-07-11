@@ -145,7 +145,7 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'onetap',
+        'NAME': 'fybox',
         'USER': 'postgres',
         'PASSWORD': 1234,
         'HOST': 'localhost', 
@@ -200,5 +200,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-AUTH_USER_MODEL = 'chat.User'
+AUTH_USER_MODEL = 'users_auth.User'
 CORS_ALLOW_ALL_ORIGINS = True
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_SSL = False  
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'fyboxteam@gmail.com'
+EMAIL_HOST_PASSWORD = 'erqt gupu dxcf oudh'

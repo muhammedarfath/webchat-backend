@@ -1,43 +1,9 @@
-from django.contrib.auth.models import AbstractUser
-from django.db.models.signals import post_save
 from django.db import models
 from django.db.models import Q
 from django.core.validators import RegexValidator
+from users_auth.models import User,Profile
 
 # Create your models here.
-
-
-
-class User(AbstractUser):
-    username = models.CharField(max_length=150,unique=True)
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=15, unique=True,blank=True, null=True)
-    otp = models.BooleanField(default=False)
-    
-    REQUIRED_FIELDS = ['email']
-
-    def __str__(self):
-        return self.username
-
-
-class Profile(models.Model):
-    user = models.OneToOneField(User,on_delete=models.CASCADE)
-    full_name = models.CharField(max_length=300)
-    bio = models.CharField(max_length=300,blank=True, null=True)
-    image = models.ImageField(upload_to='user_images', blank=True, null=True)
-    followers = models.ManyToManyField(User, related_name='followers', blank=True)
-    following = models.ManyToManyField(User, related_name='following', blank=True)
-
-    def __str__(self):
-        return self.user.username
-    
-def created_user_profile(sender,instance,created,**kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-    
-    
-post_save.connect(created_user_profile,sender=User)      
-
     
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
