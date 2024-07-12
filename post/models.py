@@ -6,6 +6,8 @@ from django.utils.text import slugify
 from django.db.models.signals import post_save
 
 # Create your models here.
+def user_directory_path(instance, filename):
+    return f'user_{instance.user.id}/{filename}'
 
 class Tag(models.Model):
     title = models.CharField(max_length=75,verbose_name='Tag')
@@ -27,7 +29,7 @@ class Tag(models.Model):
          
 
 class Post(models.Model):
-    picture = models.ImageField(upload_to='user_directory_path',verbose_name='Picture',null=False)
+    picture = models.ImageField(upload_to=user_directory_path,verbose_name='Picture',null=False)
     caption = models.TextField(max_length=1500,verbose_name="Caption")
     posted = models.DateTimeField(auto_now_add = True)
     tags = models.ManyToManyField(Tag,related_name='tags')

@@ -30,31 +30,28 @@ class Posts(APIView):
         
 class NewPost(APIView):
     def post(self,request,username):
+        print(username)
         try:
             user = User.objects.get(username=username)
             tags_objs = []
             if user:
-                form  = NewPostForm(request.POST, request.FILES)
-                if form.is_valid():
-                    picture = form.cleaned_data.get('picture')    
-                    caption = form.cleaned_data.get('caption')
-                    tags_form = form.cleaned_data.get('tags')
-                    
-                    
-                    tags_list = list(tags_form.split(','))
-                    
-                    for tag in tags_list:
-                        t,created = Tag.objects.get_or_create(title=tag)
-                        tags_objs.append(t)
-                    p,created = Post.objects.get_or_create(picture=picture,caption=caption,user=user)  
-                    p.tags.set(tags_objs)
-                    p.save()
-                    serializer = PostSerializer(p)
-                    return Response(serializer.data, status=status.HTTP_201_CREATED)
-                else:
-                    return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+                picture = request.FILES.get('picture')
+                caption = request.data.get('caption')
+                tags_form = request.data.get('tags')
+                 
+                print(picture)
+                
+                tags_list = list(tags_form.split(','))
+                
+                for tag in tags_list:
+                    t,created = Tag.objects.get_or_create(title=tag)
+                    tags_objs.append(t)
+                p,created = Post.objects.get_or_create(picture=picture,caption=caption,user=user)  
+                p.tags.set(tags_objs)
+                p.save()
+                return Response({"message":"post added successfully"}, status=status.HTTP_201_CREATED)
             else:
-                return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error":"User not found"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
