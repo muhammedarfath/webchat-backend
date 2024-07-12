@@ -2,8 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
-
-from chat.serializers import UserDetailsSerializer
+from users_auth.serializers import UserDetailsSerializer
 from .serializers import MessageSerializer
 from chat.models import Message, Profile
 from rest_framework.response import Response
@@ -11,9 +10,7 @@ from rest_framework import status
         
 class LastThreeMessages(APIView):
     permission_classes = [AllowAny]
-
     def get(self, request,userId):
-        print(userId)
         if userId is not None:
             try:
                 messages = Message.objects.filter(

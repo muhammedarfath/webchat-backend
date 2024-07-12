@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
+from users_auth.serializers import ProfileSerializer, UserDetailsSerializer
 from .models import Message, Profile
-from .serializers import UserDetailsSerializer,ProfileSerializer
 from django.db.models import Q
 
 
