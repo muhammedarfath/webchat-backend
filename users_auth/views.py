@@ -27,11 +27,14 @@ class SignUpView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data,status=status.HTTP_201_CREATED)
-            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":"check your credentials"},serializer.errors,status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print(e)
             return Response({"error":"somthing went wrong"})
         
+    
+    
+    
     
 class OTPVerificationView(APIView):
     permission_classes = [AllowAny]
@@ -78,9 +81,7 @@ class ResentOTP(APIView):
         except Exception as e:
             return Response({"error":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
             
-            
-            
-        
+
         
 
 class LoginView(APIView):
@@ -103,6 +104,7 @@ class LoginView(APIView):
         refresh = RefreshToken.for_user(user)
                
         response_data = {
+            'message':"Login Successfully",
             'refresh': str(refresh),
             'access': str(refresh.access_token),
             'username': user.username,
@@ -111,6 +113,8 @@ class LoginView(APIView):
             'is_superuser': user.is_superuser,
         }
         return Response(response_data,status=status.HTTP_200_OK)
+    
+    
     
     
 class ResetPassword(APIView):
@@ -137,18 +141,24 @@ class ResetPassword(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
+
 class PasswordResetConfirm(APIView):
-        permission_classes = [AllowAny]
-        def post(self,request,user_id):
-            try:
-                password = request.data.get("password")
-                user = User.objects.get(id=user_id)
-                user.password = " "
-                if user:
-                    user.set_password(password)
-                    user.save()
-                    return Response({'message': 'Password has been changed.'}, status=status.HTTP_200_OK)
-                else:
-                    return Response({'error': 'Oops...User not found'}, status=status.HTTP_404_NOT_FOUND)
-            except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    permission_classes = [AllowAny]
+
+    def post(self, request, user_id):
+        try:
+            password = request.data.get("password")
+            if not password:
+                return Response({'error': 'Password is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            user = User.objects.get(id=user_id)
+            user.set_password(password)
+            user.save()
+            
+            return Response({'message': 'Password has been changed.'}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'error': 'Oops... User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

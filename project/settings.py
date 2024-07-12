@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'users_auth',
     'app_profile',
     'home',
+    'post',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',

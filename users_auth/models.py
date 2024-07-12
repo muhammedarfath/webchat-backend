@@ -21,7 +21,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ['email']
 
     def __str__(self):
-        return self.username
+        return self.username   
     
 def send_otp(sender, instance, created, **kwargs):
     if created:
@@ -36,7 +36,6 @@ def send_otp(sender, instance, created, **kwargs):
             send_mail(subject, message, email_from, recipient_list)
         except Exception as e:
             print(e)
-
 post_save.connect(send_otp, sender=User)
 
 
@@ -46,8 +45,7 @@ class Profile(models.Model):
     date_of_birth = models.DateField(blank=True,null=True)  
     bio = models.CharField(max_length=300,blank=True, null=True)
     image = models.ImageField(upload_to='user_images', blank=True, null=True)
-    followers = models.ManyToManyField(User, related_name='followers', blank=True)
-    following = models.ManyToManyField(User, related_name='following', blank=True)
+
 
     def __str__(self):
         return self.user.username
