@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from .forms import NewPostForm
@@ -30,7 +30,6 @@ class Posts(APIView):
         
 class NewPost(APIView):
     def post(self,request,username):
-        print(username)
         try:
             user = User.objects.get(username=username)
             tags_objs = []
@@ -38,9 +37,7 @@ class NewPost(APIView):
                 picture = request.FILES.get('picture')
                 caption = request.data.get('caption')
                 tags_form = request.data.get('tags')
-                 
-                print(picture)
-                
+                                 
                 tags_list = list(tags_form.split(','))
                 
                 for tag in tags_list:
@@ -54,6 +51,24 @@ class NewPost(APIView):
                 return Response({"error":"User not found"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class TagPost(APIView):
+    def get(self,request,title):
+        print("hsjfhskajfdskfdkfsfa")
+        try:
+            tag = get_object_or_404(Tag,title=title)    
+            posts = Post.objects.filter(tags=tag).order_by('-posted') 
+            if posts:
+                serializer = PostSerializer(posts, many=True)   
+                print(serializer)
+                return Response(serializer.data,status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'No Posts.'}, status=status.HTTP_404_NOT_FOUND)      
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                     
+        
             
         
         
