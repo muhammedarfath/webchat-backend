@@ -2,8 +2,8 @@ from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from .forms import NewPostForm
-from post.serializers import PostSerializer
-from post.models import Post, Stream, Tag
+from post.serializers import LikesSerializer, PostSerializer
+from post.models import Likes, Post, Stream, Tag
 from users_auth.models import User
 from rest_framework.response import Response
 from rest_framework import status
@@ -12,15 +12,22 @@ from rest_framework import status
 
 
 class Posts(APIView):
-    def get(self, request, username):
+    def post(self, request, username):
         try:
+            user_id = request.data.get('user_id')
             user = User.objects.get(username=username)
             if user:
                 posts = Stream.objects.filter(user=user)
                 post_ids = [post.post.id for post in posts]
                 post_items = Post.objects.filter(id__in=post_ids).order_by('-posted') 
-                serializer = PostSerializer(post_items, many=True)   
-                return Response(serializer.data, status=status.HTTP_200_OK) 
+                response_data = []
+                for post in post_items:
+                    serializer = PostSerializer(post) 
+                    post_data = serializer.data 
+                    post_data['is_liked'] = Likes.objects.filter(user__id=user_id, post=post).exists()
+                    print(post_data,"where")
+                    response_data.append(post_data)
+                return Response(response_data, status=status.HTTP_200_OK)      
             else:
                 return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)      
         except Exception as e:
@@ -67,6 +74,40 @@ class TagPost(APIView):
                 return Response({'error': 'No Posts.'}, status=status.HTTP_404_NOT_FOUND)      
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class LikePost(APIView):
+    def post(self,request,post_id):
+        try:
+            username = request.data.get('username')
+            user = User.objects.get(username=username)
+            if user: 
+                post = Post.objects.get(id=post_id) 
+                current_likes = post.likes  
+                liked = Likes.objects.filter(user=user, post=post).count()  
+                if not liked:
+                    like = Likes.objects.create(user=user,post=post)
+                    current_likes = current_likes + 1
+                    like_serializer = LikesSerializer(like)
+                else:
+                    Likes.objects.filter(user=user, post=post).delete()
+                    current_likes = current_likes - 1
+                    like_serializer = None
+                post.likes = current_likes
+                post.save()  
+                post_serializer = PostSerializer(post)
+                return Response({
+                'liked': bool(not liked),
+                'post': post_serializer.data,
+                'like': like_serializer.data if like_serializer else None
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({"error":"User not found"}, status=status.HTTP_400_BAD_REQUEST)    
+        except Exception as e:
+                    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)            
+                
+            
+           
                      
         
             
