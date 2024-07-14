@@ -18,10 +18,11 @@ class Posts(APIView):
             user = User.objects.get(username=username)
             if user:
                 profile = Profile.objects.get(user=user)
-                print(profile,"which oneeee")
-                posts = Stream.objects.filter(user=user)
-                post_ids = [post.post.id for post in posts]
-                post_items = Post.objects.filter(id__in=post_ids).order_by('-posted') 
+                # posts = Stream.objects.filter(user=user) 
+                # post_ids = [post.post.id for post in posts]
+                # post_items = Post.objects.filter(id__in=post_ids).order_by('-posted') 
+                post_items = Post.objects.all().order_by('-posted') 
+
                 response_data = []
                 for post in post_items:
                     serializer = PostSerializer(post) 

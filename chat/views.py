@@ -67,32 +67,7 @@ class Suggested(APIView):
 
 
         
-class FollowRequest(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        current_user_id = request.data.get('followerId')
-        friend_user_id = request.data.get('userId')
-
-        if current_user_id is not None and friend_user_id is not None:
-            try:
-                friend_profile = Profile.objects.get(id=friend_user_id)
-                current_profile = Profile.objects.get(id=current_user_id)
-                
-
-                current_profile.following.add(friend_profile.user)
-                friend_profile.followers.add(current_profile.user)
     
-
-                serializer = ProfileSerializer(friend_profile)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            except Profile.DoesNotExist:
-                return Response({'message': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
-            except Exception as e:
-                return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            return Response({'message': 'Both current_userId and userId are required'}, status=status.HTTP_400_BAD_REQUEST)
-            
 
 class EditProfile(APIView):
     permission_classes = [AllowAny]
