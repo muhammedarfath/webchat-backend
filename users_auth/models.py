@@ -44,6 +44,7 @@ class Profile(models.Model):
     full_name = models.CharField(max_length=300)
     date_of_birth = models.DateField(blank=True,null=True)  
     bio = models.CharField(max_length=300,blank=True, null=True)
+    favorites = models.ManyToManyField('post.Post', related_name='favorited_by')
     image = models.ImageField(upload_to='user_images', blank=True, null=True)
 
 

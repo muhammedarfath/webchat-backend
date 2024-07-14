@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny,IsAuthenticated
 from .forms import NewPostForm
 from post.serializers import LikesSerializer, PostSerializer
 from post.models import Likes, Post, Stream, Tag
-from users_auth.models import User
+from users_auth.models import Profile, User
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -17,6 +17,8 @@ class Posts(APIView):
             user_id = request.data.get('user_id')
             user = User.objects.get(username=username)
             if user:
+                profile = Profile.objects.get(user=user)
+                print(profile,"which oneeee")
                 posts = Stream.objects.filter(user=user)
                 post_ids = [post.post.id for post in posts]
                 post_items = Post.objects.filter(id__in=post_ids).order_by('-posted') 
@@ -25,7 +27,7 @@ class Posts(APIView):
                     serializer = PostSerializer(post) 
                     post_data = serializer.data 
                     post_data['is_liked'] = Likes.objects.filter(user__id=user_id, post=post).exists()
-                    print(post_data,"where")
+                    post_data['is_faved'] = profile.favorites.filter(id=post.id).exists()
                     response_data.append(post_data)
                 return Response(response_data, status=status.HTTP_200_OK)      
             else:
@@ -104,9 +106,37 @@ class LikePost(APIView):
             else:
                 return Response({"error":"User not found"}, status=status.HTTP_400_BAD_REQUEST)    
         except Exception as e:
-                    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)            
+                    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)     
                 
-            
+                
+                
+                
+                
+class FavoritePost(APIView):
+    def post(self, request, post_id):
+        try:
+            username = request.data.get('username')
+            user = User.objects.get(username=username)
+            if user: 
+                post = Post.objects.get(id=post_id)
+                profile = Profile.objects.get(user=user)
+                if profile.favorites.filter(id=post_id).exists():
+                    profile.favorites.remove(post)
+                    message = "Post removed from favorites."
+                else:
+                    profile.favorites.add(post)
+                    message = "Post added to favorites."
+                return Response({"message": message}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Post.DoesNotExist:
+            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Profile.DoesNotExist:
+            return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
            
                      
         

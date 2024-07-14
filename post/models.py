@@ -1,6 +1,5 @@
 from typing import Iterable
 from django.db import models
-from users_auth.models import User
 from django.urls import reverse
 from django.utils.text import slugify
 from django.db.models.signals import post_save
@@ -33,19 +32,19 @@ class Post(models.Model):
     caption = models.TextField(max_length=1500,verbose_name="Caption")
     posted = models.DateTimeField(auto_now_add = True)
     tags = models.ManyToManyField(Tag,related_name='tags')
-    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    user = models.ForeignKey('users_auth.User', on_delete=models.CASCADE)
     likes = models.IntegerField(default=0)
     
     def get_absolute_url(self):
         return reverse("postdetails", args={str(self.id)})
     
 class Follow(models.Model):
-    follower = models.ForeignKey(User,on_delete=models.CASCADE,related_name="follower")   
-    following = models.ForeignKey(User,on_delete=models.CASCADE,related_name="following")   
+    follower = models.ForeignKey('users_auth.User',on_delete=models.CASCADE,related_name="follower")   
+    following = models.ForeignKey('users_auth.User',on_delete=models.CASCADE,related_name="following")   
     
 class Stream(models.Model):
-    following = models.ForeignKey(User,on_delete=models.CASCADE, related_name='stream_following')
-    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    following = models.ForeignKey('users_auth.User',on_delete=models.CASCADE, related_name='stream_following')
+    user = models.ForeignKey('users_auth.User',on_delete=models.CASCADE)
     post = models.ForeignKey(Post,on_delete=models.CASCADE)
     date = models.DateTimeField()
     
@@ -62,7 +61,7 @@ post_save.connect(Stream.add_post,sender=Post)
 
 
 class Likes(models.Model):
-	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_like')
+	user = models.ForeignKey('users_auth.User', on_delete=models.CASCADE, related_name='user_like')
 	post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_like')    
 
     
