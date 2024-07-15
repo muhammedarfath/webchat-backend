@@ -1,9 +1,8 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny,IsAuthenticated
-from .forms import NewPostForm
 from post.serializers import LikesSerializer, PostSerializer
-from post.models import Likes, Post, Stream, Tag
+from post.models import Follow, Likes, Post, Stream, Tag
 from users_auth.models import Profile, User
 from rest_framework.response import Response
 from rest_framework import status
@@ -23,12 +22,14 @@ class Posts(APIView):
                 # post_items = Post.objects.filter(id__in=post_ids).order_by('-posted') 
                 post_items = Post.objects.all().order_by('-posted') 
 
+
                 response_data = []
                 for post in post_items:
                     serializer = PostSerializer(post) 
                     post_data = serializer.data 
                     post_data['is_liked'] = Likes.objects.filter(user__id=user_id, post=post).exists()
                     post_data['is_faved'] = profile.favorites.filter(id=post.id).exists()
+                    post_data['follow_status'] = Follow.objects.filter(following=post.user,follower__id=user_id).exists()
                     response_data.append(post_data)
                 return Response(response_data, status=status.HTTP_200_OK)      
             else:
@@ -44,7 +45,9 @@ class NewPost(APIView):
             user = User.objects.get(username=username)
             tags_objs = []
             if user:
-                picture = request.FILES.get('picture')
+                media_file = request.FILES.get('media_file')
+
+                print(media_file)
                 caption = request.data.get('caption')
                 tags_form = request.data.get('tags')
                                  
@@ -53,7 +56,8 @@ class NewPost(APIView):
                 for tag in tags_list:
                     t,created = Tag.objects.get_or_create(title=tag)
                     tags_objs.append(t)
-                p,created = Post.objects.get_or_create(picture=picture,caption=caption,user=user)  
+                p,created = Post.objects.get_or_create(media_file=media_file,caption=caption,user=user)  
+                print("success")
                 p.tags.set(tags_objs)
                 p.save()
                 return Response({"message":"post added successfully"}, status=status.HTTP_201_CREATED)

@@ -28,7 +28,7 @@ class Tag(models.Model):
          
 
 class Post(models.Model):
-    picture = models.ImageField(upload_to=user_directory_path,verbose_name='Picture',null=False)
+    media_file = models.FileField(upload_to=user_directory_path, verbose_name='Media File', null=True ,blank=True)
     caption = models.TextField(max_length=1500,verbose_name="Caption")
     posted = models.DateTimeField(auto_now_add = True)
     tags = models.ManyToManyField(Tag,related_name='tags')
