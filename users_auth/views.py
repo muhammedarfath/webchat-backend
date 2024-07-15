@@ -2,9 +2,10 @@ import random
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny,IsAuthenticated
+from users_auth.models import Profile
 from project import settings
 from chat.models import User
-from .serializers import UserRegistrationSerializer
+from .serializers import ProfileSerializer, UserRegistrationSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -162,3 +163,17 @@ class PasswordResetConfirm(APIView):
             return Response({'error': 'Oops... User not found.'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class EditProfile(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, id):
+        print(id)
+        profile = get_object_or_404(Profile, user=id)
+        serializer = ProfileSerializer(instance=profile, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
