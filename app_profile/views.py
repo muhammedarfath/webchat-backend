@@ -21,7 +21,7 @@ class UserProfile(APIView):
         try:
             if user_name:
                 profile = Profile.objects.get(user__username=user_name)
-                posts = Post.objects.filter(user__username=user_name)
+                posts = Post.objects.filter(user__username=user_name).order_by("-posted")
                 profile_serializer = UserDetailsSerializer(profile)
                 post_serializer = PostSerializer(posts,many=True)
                 
