@@ -30,8 +30,7 @@ class SignUpView(APIView):
                 return Response(serializer.data,status=status.HTTP_201_CREATED)
             return Response({"error":"check your credentials"},serializer.errors,status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(e)
-            return Response({"error":"somthing went wrong"})
+            return Response({"error": "Username or email already exists"})
         
     
     
@@ -68,7 +67,7 @@ class ResentOTP(APIView):
             user = get_object_or_404(User, email=email)
             user.otp = None
             if user.email:
-                otp = str(random.randint(10000,99999))
+                otp = str(random.randint(100000,999999))
                 user.otp = otp
                 user.save()
                 subject = 'Resent OTP Verification Code'
@@ -112,6 +111,7 @@ class LoginView(APIView):
             'user_id': user.id,
             'user_email': user.email,
             'is_superuser': user.is_superuser,
+            'is_email_verified':user.is_email_verified
         }
         return Response(response_data,status=status.HTTP_200_OK)
     
@@ -120,7 +120,6 @@ class LoginView(APIView):
     
 class ResetPassword(APIView):
     permission_classes = [AllowAny]
-
     def post(self, request):
         try:
             email = request.data.get("email")
@@ -133,7 +132,7 @@ class ResetPassword(APIView):
                     'fyboxteam@gmail.com',
                     [email],
                     fail_silently=False,
-                    html_message=f"<p>Your OTP is </p><p>{link}</p>"
+                    html_message=f"<p>Your Reset Password Link : </p><p>{link}</p>"
                 )
                 return Response({'message': 'Password reset link has been sent to your email.'}, status=status.HTTP_200_OK)
             else:
@@ -147,17 +146,14 @@ class ResetPassword(APIView):
 
 class PasswordResetConfirm(APIView):
     permission_classes = [AllowAny]
-
     def post(self, request, user_id):
         try:
             password = request.data.get("password")
             if not password:
                 return Response({'error': 'Password is required.'}, status=status.HTTP_400_BAD_REQUEST)
-            
             user = User.objects.get(id=user_id)
             user.set_password(password)
             user.save()
-            
             return Response({'message': 'Password has been changed.'}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({'error': 'Oops... User not found.'}, status=status.HTTP_404_NOT_FOUND)
