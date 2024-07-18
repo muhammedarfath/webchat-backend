@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny,IsAuthenticated
 from users_auth.models import Profile
 from project import settings
 from chat.models import User
-from .serializers import ProfileSerializer, UserRegistrationSerializer
+from .serializers import ProfileSerializer, UserRegistrationSerializer, UserUpdateSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -15,24 +15,29 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str 
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.exceptions import ValidationError
+
 # Create your views here.
 
         
         
         
+
 class SignUpView(APIView):
     permission_classes = [AllowAny]
-    def post(self,request):
+    
+    def post(self, request):
         try:
             serializer = UserRegistrationSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data,status=status.HTTP_201_CREATED)
-            return Response({"error":"check your credentials"},serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({"error": "Username or email already exists"})
-        
-    
+            return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     
     
@@ -48,7 +53,7 @@ class OTPVerificationView(APIView):
             if user.otp == otp_entered:
                 user.is_email_verified = True  
                 user.save()
-                return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
+                return Response({"message": "OTP verified successfully,Please Login"}, status=status.HTTP_200_OK)
             else:
                 return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -61,10 +66,9 @@ class ResentOTP(APIView):
     def post(self,request):
         try:
             email = request.data.get('email')
-            print(email)
             if not email:
                 return Response({"error":"email are required"},status=status.HTTP_400_BAD_REQUEST)
-            user = get_object_or_404(User, email=email)
+            user = get_object_or_404(User,email=email)
             user.otp = None
             if user.email:
                 otp = str(random.randint(100000,999999))
@@ -164,10 +168,10 @@ class PasswordResetConfirm(APIView):
 
 class EditProfile(APIView):
     permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
     def post(self, request, id):
-        print(id)
-        profile = get_object_or_404(Profile, user=id)
-        serializer = ProfileSerializer(instance=profile, data=request.data)
+        user = get_object_or_404(User, id=id)
+        serializer = UserUpdateSerializer(instance=user, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
