@@ -1,7 +1,8 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny,IsAuthenticated
-from post.serializers import LikesSerializer, PostSerializer
+from comment.models import Comment
+from post.serializers import CommentSerializer, LikesSerializer, PostSerializer
 from post.models import Follow, Likes, Post, Stream, Tag
 from users_auth.models import Profile, User
 from rest_framework.response import Response
@@ -17,16 +18,16 @@ class Posts(APIView):
             user = User.objects.get(username=username)
             if user:
                 profile = Profile.objects.get(user=user)
-                # posts = Stream.objects.filter(user=user) 
-                # post_ids = [post.post.id for post in posts]
-                # post_items = Post.objects.filter(id__in=post_ids).order_by('-posted') 
                 post_items = Post.objects.all().order_by('-posted') 
-
-
+                
+                
                 response_data = []
                 for post in post_items:
                     serializer = PostSerializer(post) 
                     post_data = serializer.data 
+                    comments = Comment.objects.filter(post=post).order_by('date')
+                    comment_serializer = CommentSerializer(comments, many=True)
+                    post_data['comments'] = comment_serializer.data
                     post_data['is_liked'] = Likes.objects.filter(user__id=user_id, post=post).exists()
                     post_data['is_faved'] = profile.favorites.filter(id=post.id).exists()
                     post_data['follow_status'] = Follow.objects.filter(following=post.user,follower__id=user_id).exists()
@@ -39,6 +40,24 @@ class Posts(APIView):
         
         
         
+class AddComment(APIView):
+    def post(self,request,username):
+        try:
+            profile = Profile.objects.get(user__username=username)
+            comment = request.data.get('comment')
+            post_id = request.data.get('post_id')
+            if profile and comment and post_id:
+                post = Post.objects.get(id=post_id)
+                comments = Comment.objects.create(body=comment,post=post,user=profile)
+                comments.save()
+                serializer = CommentSerializer(comments)
+                return Response(serializer.data,status=status.HTTP_200_OK)      
+            else:
+                return Response({'error': 'write a comment'}, status=status.HTTP_404_NOT_FOUND)      
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)        
+        
+            
 class NewPost(APIView):
     def post(self,request,username):
         try:

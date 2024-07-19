@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from users_auth.serializers import UsersSerializer
+from comment.models import Comment
+from users_auth.serializers import UsersSerializer,ProfileSerializer
 from .models import Likes, Post,Tag
 
 class TagSerializer(serializers.ModelSerializer):
@@ -22,4 +23,10 @@ class LikesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Likes
         fields = ['user','post']    
+
+class CommentSerializer(serializers.ModelSerializer):
+    user = ProfileSerializer()
+    class Meta:
+        model = Comment 
+        fields = ['user','body','date']   
     

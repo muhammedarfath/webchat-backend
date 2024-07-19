@@ -19,9 +19,10 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         depth = 1
         
 class ProfileSerializer(serializers.ModelSerializer):
+    user=UsersSerializer(required=False)
     class Meta:
         model = Profile    
-        fields = ['full_name','date_of_birth', 'bio', 'image']
+        fields = ['user','full_name','date_of_birth', 'bio', 'image']
         
         
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -58,7 +59,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer()
+    profile = ProfileSerializer(required=False)
     class Meta:
         model = User
         fields = ('username', 'password', 'email', 'phone', 'profile')
