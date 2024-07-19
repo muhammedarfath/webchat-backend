@@ -26,14 +26,12 @@ from rest_framework.exceptions import ValidationError
 
 class SignUpView(APIView):
     permission_classes = [AllowAny]
-    
     def post(self, request):
         try:
             serializer = UserRegistrationSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-            print("Validation errors:", serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
