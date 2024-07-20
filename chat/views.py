@@ -41,7 +41,44 @@ class Users(APIView):
                 return Response({"error": "An internal error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return Response({"error": "current_userId not provided in request data."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
+class FriendUser(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        current_userId = request.data.get('current_userId')
+        if username is not None:
+            try:
+                messages = Message.objects.filter(
+                    Q(author_id=current_userId) & Q(recipient__user__username=username)
+                )
+                print(messages,"is it empty")
+                serialized_profiles = []
+                if messages:
+                    print("looooooooo")
+                    message_users = set()
+                    for message in messages:
+                        participants = [message.author, message.recipient.user]
+                        for participant in participants:
+                            if participant and participant.id != username and participant.id not in message_users:
+                                profile = Profile.objects.get(user=participant)
+                                serialized_profiles.append(UserDetailsSerializer(profile).data)
+                                message_users.add(participant.id)
+                    return Response(serialized_profiles, status=status.HTTP_200_OK)
+                else:
+                    profile = Profile.objects.get(user__username=username)
+                    serialized_profiles.append(UserDetailsSerializer(profile).data)
+                    return Response(serialized_profiles, status=status.HTTP_200_OK)
+            except Profile.DoesNotExist:
+                return Response({"error": "Current user profile not found."}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({"error": "An internal error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({"error": "current_userId not provided in request data."}, status=status.HTTP_400_BAD_REQUEST)
+
+            
         
         
 class Suggested(APIView):

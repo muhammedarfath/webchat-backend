@@ -12,7 +12,6 @@ class TagSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)  
     user = UsersSerializer()
-
     class Meta:
         model = Post
         fields = ['id', 'media_file', 'caption', 'posted', 'tags', 'user', 'likes']

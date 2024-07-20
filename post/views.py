@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny,IsAuthenticated
+from users_auth.serializers import ProfileSerializer
 from comment.models import Comment
 from post.serializers import CommentSerializer, LikesSerializer, PostSerializer
 from post.models import Follow, Likes, Post, Stream, Tag
@@ -31,6 +32,11 @@ class Posts(APIView):
                     post_data['is_liked'] = Likes.objects.filter(user__id=user_id, post=post).exists()
                     post_data['is_faved'] = profile.favorites.filter(id=post.id).exists()
                     post_data['follow_status'] = Follow.objects.filter(following=post.user,follower__id=user_id).exists()
+                    
+                    # Get and serialize the profile of the post's user
+                    post_user_profile = Profile.objects.get(user=post.user)
+                    post_user_profile_serializer = ProfileSerializer(post_user_profile)
+                    post_data['profile'] = post_user_profile_serializer.data
                     response_data.append(post_data)
                 return Response(response_data, status=status.HTTP_200_OK)      
             else:
