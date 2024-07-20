@@ -67,9 +67,9 @@ class AddComment(APIView):
 class NewPost(APIView):
     def post(self,request,username):
         try:
-            user = User.objects.get(username=username)
+            profile = Profile.objects.get(user__username=username)
             tags_objs = []
-            if user:
+            if profile:
                 media_file = request.FILES.get('media_file')
 
                 print(media_file)
@@ -81,8 +81,7 @@ class NewPost(APIView):
                 for tag in tags_list:
                     t,created = Tag.objects.get_or_create(title=tag)
                     tags_objs.append(t)
-                p,created = Post.objects.get_or_create(media_file=media_file,caption=caption,user=user)  
-                print("success")
+                p,created = Post.objects.get_or_create(media_file=media_file,caption=caption,user=profile.user,profile=profile)  
                 p.tags.set(tags_objs)
                 p.save()
                 return Response({"message":"post added successfully"}, status=status.HTTP_201_CREATED)
@@ -90,7 +89,6 @@ class NewPost(APIView):
                 return Response({"error":"User not found"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
         
 class TagPost(APIView):
     def get(self,request,title):

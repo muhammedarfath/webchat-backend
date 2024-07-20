@@ -15,7 +15,6 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str 
-from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.exceptions import ValidationError
 
 # Create your views here.
@@ -95,6 +94,8 @@ class LoginView(APIView):
         else:
             try:
                 user = User.objects.get(username=username)
+                profile = Profile.objects.get(user=user)
+                serializer = ProfileSerializer(profile)
                 
             except User.DoesNotExist:
                 return Response({'error':"invalid cridentials"},status=status.HTTP_401_UNAUTHORIZED) 
@@ -110,7 +111,8 @@ class LoginView(APIView):
             'user_id': user.id,
             'user_email': user.email,
             'is_superuser': user.is_superuser,
-            'is_email_verified':user.is_email_verified
+            'is_email_verified':user.is_email_verified,
+            'profile':serializer.data,
         }
         return Response(response_data,status=status.HTTP_200_OK)
     
@@ -163,7 +165,6 @@ class PasswordResetConfirm(APIView):
 
 class EditProfile(APIView):
     permission_classes = [AllowAny]
-    parser_classes = [MultiPartParser, FormParser]
     def post(self, request, id):
         user = get_object_or_404(User, id=id)
         serializer = UserUpdateSerializer(instance=user, data=request.data)

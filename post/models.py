@@ -4,6 +4,8 @@ from django.urls import reverse
 from django.utils.text import slugify
 from django.db.models.signals import post_save
 
+from users_auth.models import Profile
+
 # Create your models here.
 def user_directory_path(instance, filename):
     return f'user_{instance.user.id}/{filename}'
@@ -33,6 +35,7 @@ class Post(models.Model):
     posted = models.DateTimeField(auto_now_add = True)
     tags = models.ManyToManyField(Tag,related_name='tags')
     user = models.ForeignKey('users_auth.User', on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile,on_delete=models.CASCADE,null=True)
     likes = models.IntegerField(default=0)
     
     def get_absolute_url(self):
