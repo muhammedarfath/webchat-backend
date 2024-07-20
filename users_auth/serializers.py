@@ -67,6 +67,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
+        print(profile_data)
         try:
             user = User.objects.create_user(**validated_data)
         except Exception as e:
@@ -76,4 +77,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             for attr, value in profile_data.items():
                 setattr(profile_instance, attr, value)
             profile_instance.save()
-        return user
+        return {'user': user, 'profile': profile_instance}
+    
+    def to_representation(self, instance):
+        user = instance['user']
+        profile = instance['profile']
+        user_data = super(UserRegistrationSerializer, self).to_representation(user)
+        profile_data = ProfileSerializer(profile).data if profile else None
+        user_data['profile'] = profile_data
+        return user_data

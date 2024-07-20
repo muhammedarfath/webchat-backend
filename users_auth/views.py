@@ -20,9 +20,6 @@ from rest_framework.exceptions import ValidationError
 
 # Create your views here.
 
-        
-        
-        
 
 class SignUpView(APIView):
     permission_classes = [AllowAny]
@@ -30,14 +27,13 @@ class SignUpView(APIView):
         try:
             serializer = UserRegistrationSerializer(data=request.data)
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                result = serializer.save()
+                return Response(serializer.to_representation(result), status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": "Internal Server Error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
     
     
 class OTPVerificationView(APIView):

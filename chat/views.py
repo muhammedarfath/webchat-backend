@@ -3,8 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
+from post.models import Follow
 from users_auth.serializers import UserDetailsSerializer
-from .models import Message, Profile
+from .models import Message
+from users_auth.models import Profile
 from django.db.models import Q
 
 
@@ -50,15 +52,16 @@ class Suggested(APIView):
         search_query = request.data.get('search_query', '')
         if current_user_id is not None:
             try:
-                current_user_profile = Profile.objects.get(user_id=current_user_id)
                 profiles = Profile.objects.exclude(user=current_user_id)
-                profiles = profiles.exclude(followers=current_user_profile.user)
-
+                response_data = []
                 if search_query:
                     profiles = profiles.filter(user__username__icontains=search_query)
-
-                serializer = UserDetailsSerializer(profiles, many=True)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                for profile in profiles:      
+                    serializer = UserDetailsSerializer(profile)
+                    post_data = serializer.data
+                    post_data['follow_status'] = Follow.objects.filter(following=profile.user,follower__id=current_user_id).exists()
+                    response_data.append(post_data)
+                return Response(response_data, status=status.HTTP_200_OK)
 
             except Profile.DoesNotExist:
                 return Response({"error": "Current user profile not found."}, status=404)
