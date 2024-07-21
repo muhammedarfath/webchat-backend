@@ -43,7 +43,6 @@ class UserProfile(APIView):
 
 class FollowRequest(APIView):
     permission_classes = [AllowAny]
-
     def post(self, request):
         current_user_id = request.data.get('current_user')
         friend_user_username = request.data.get('follow_user')
@@ -52,8 +51,11 @@ class FollowRequest(APIView):
             try:
                 following = get_object_or_404(User, username=friend_user_username)
                 follow_user = Follow.objects.filter(follower=current_user_id, following=following)
-
-                if follow_user.exists():
+                friend_user = Follow.objects.filter(follower=following, following=current_user_id)
+                if follow_user.exists() and friend_user.exists():
+                    follow_user.delete()
+                    return Response({"message": "User Already following"}, status=status.HTTP_200_OK)
+                elif follow_user.exists():
                     follow_user.delete()
                     return Response({"message": "Unfollowed successfully"}, status=status.HTTP_200_OK)
                 else:
@@ -67,9 +69,9 @@ class FollowRequest(APIView):
         else:
             return Response({'message': 'Both current_user and follow_user are required'}, status=status.HTTP_400_BAD_REQUEST)
         
+        
 class FollowBackRequest(APIView):
     permission_classes = [AllowAny]
-
     def post(self, request):
         current_user_id = request.data.get('current_user')
         follow_user_username = request.data.get('follow_user')
@@ -98,7 +100,6 @@ class FollowBackRequest(APIView):
         
 class CheckRelationship(APIView):
     permission_classes = [AllowAny]
-
     def get(self, request):
         current_user_id = request.query_params.get('current_userId')
         follow_user_username = request.query_params.get('follow_user')
@@ -117,9 +118,9 @@ class CheckRelationship(APIView):
                 if follows and followed_by:
                     return Response({'status': 'followed'}, status=status.HTTP_200_OK)
                 elif follows:
-                    return Response({'status': 'requested'}, status=status.HTTP_200_OK)
-                elif followed_by:
                     return Response({'status': 'following'}, status=status.HTTP_200_OK)
+                elif followed_by:
+                    return Response({'status': 'followback'}, status=status.HTTP_200_OK)
                 else:
                     return Response({'status': 'none'}, status=status.HTTP_200_OK)
             except User.DoesNotExist:
