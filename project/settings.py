@@ -13,7 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
-
+from dotenv import load_dotenv
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,6 +30,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+API_KEY = os.getenv('API_KEY')
+BASE_URL = os.getenv('BASE_URL')
 
 # Application definition
 INSTALLED_APPS = [
@@ -43,6 +46,7 @@ INSTALLED_APPS = [
     'users_auth',
     'app_profile',
     'home',
+    'news',
     'post',
     'comment',
     'rest_framework',
@@ -140,6 +144,15 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',  
+    }
+}
+
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
