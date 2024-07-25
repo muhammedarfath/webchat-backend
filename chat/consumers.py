@@ -8,6 +8,8 @@ class ChatConsumer(WebsocketConsumer):
         if not user.is_authenticated:
             return
         
+        
+        
         self.accept()
     
     

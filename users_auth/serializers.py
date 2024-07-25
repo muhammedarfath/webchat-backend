@@ -84,10 +84,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 setattr(profile_instance, attr, value)
             profile_instance.save()    
         return {'user': user, 'profile': profile_instance}
-    # def to_representation(self, instance):
-    #     user = instance['user']
-    #     profile = instance['profile']
-    #     user_data = super(UserRegistrationSerializer, self).to_representation(user)
-    #     profile_data = ProfileSerializer(profile).data if profile else None
-    #     user_data['profile'] = profile_data
-    #     return user_data
+    def to_representation(self, instance):
+        user = instance['user']
+        profile = instance['profile']
+        user_data = super(UserRegistrationSerializer, self).to_representation(user)
+        profile_data = ProfileSerializer(profile).data if profile else None
+        user_data['profile'] = profile_data
+        return user_data

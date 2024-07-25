@@ -1,4 +1,5 @@
 import random
+from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny,IsAuthenticated
@@ -16,7 +17,11 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str 
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.http import JsonResponse
+from datetime import datetime, timedelta
+
 # Create your views here.
+
 
 
 class SignUpView(APIView):
@@ -25,15 +30,8 @@ class SignUpView(APIView):
         try:
             serializer = UserRegistrationSerializer(data=request.data)
             if serializer.is_valid():
-                result = serializer.save()
-                user_data = get_auth_for_user(result['user'])
-                profile_data = ProfileSerializer(result['profile']).data
-                response_data = {
-                    'user_data':user_data,
-                    'profile':profile_data
-                }
-                
-                return Response(response_data, status=status.HTTP_201_CREATED)
+                serializer.save()
+                return Response(serializer.to_representation, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -84,16 +82,7 @@ class ResentOTP(APIView):
                 return Response({"error":"Failed to resend OTP. Please try again."})
         except Exception as e:
             return Response({"error":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
-            
-def get_auth_for_user(user):
-    tokens = RefreshToken.for_user(user) 
-    return {
-        'user':UsersSerializer(user).data,
-        'tokens':{
-            'refresh': str(tokens),
-            'access': str(tokens.access_token),
-        }
-    }
+
         
 
 class LoginView(APIView):
@@ -107,7 +96,7 @@ class LoginView(APIView):
 
         else:
             try:
-                user = User.objects.get(username=username)
+                user = authenticate(username=username, password=password)
                 profile = Profile.objects.get(user=user)
                 serializer = ProfileSerializer(profile)
                 
@@ -116,11 +105,11 @@ class LoginView(APIView):
         if not user.check_password(password):
             return Response({'error':"invalid cridentials"},status=status.HTTP_401_UNAUTHORIZED)  
         
-        user_data = get_auth_for_user(user)
-                       
+        refresh = RefreshToken.for_user(user)
         response_data = {
             'message':"Login Successfully",
-            'user_data':user_data,
+            'refresh':str(refresh),
+            'access':str(refresh.access_token),
             'username': user.username,
             'user_id': user.id,
             'user_email': user.email,
@@ -128,10 +117,25 @@ class LoginView(APIView):
             'is_email_verified':user.is_email_verified,
             'profile':serializer.data,
         }
-        return Response(response_data,status=status.HTTP_200_OK)
+        response = JsonResponse(response_data,status=status.HTTP_200_OK)
+        expiration_time = datetime.utcnow() + timedelta(days=1)
+        response.set_cookie(key='user',value=response_data['access'],expires=expiration_time)
+        
+        return response
     
     
-    
+class LogoutView(APIView):
+     permission_classes = (IsAuthenticated,)
+     def post(self, request):
+          try:
+               refresh_token = request.data["refresh_token"]
+               token = RefreshToken(refresh_token)
+               token.blacklist()
+               return Response(status=status.HTTP_205_RESET_CONTENT)
+          except Exception as e:
+               return Response(status=status.HTTP_400_BAD_REQUEST)    
+                       
+
     
 class ResetPassword(APIView):
     permission_classes = [AllowAny]

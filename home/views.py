@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from users_auth.serializers import UserDetailsSerializer
 from .serializers import MessageSerializer
@@ -9,17 +9,13 @@ from rest_framework.response import Response
 from rest_framework import status    
         
 class LastThreeMessages(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = (IsAuthenticated, )
     def get(self, request,userId):
         if userId is not None:
             try:
                 messages = Message.objects.filter(
                     Q(author_id=userId) | Q(recipient__user_id=userId)
                 ).order_by('-timestamp')[:3]
-                
-                print(messages,"this is some")
-                
-                
                 if messages.exists():
                     serialized_profiles = []
                     message_users = set()
