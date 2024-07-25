@@ -113,7 +113,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-]
+]    
+
 
 ROOT_URLCONF = 'project.urls'
 
@@ -160,7 +161,7 @@ CACHES = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'fybox',
+        'NAME': 'fyboxteam',
         'USER': 'postgres',
         'PASSWORD': 1234,
         'HOST': 'localhost', 

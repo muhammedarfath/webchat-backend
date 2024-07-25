@@ -67,21 +67,27 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
         print(profile_data)
-        try:
-            user = User.objects.create_user(**validated_data)
-        except Exception as e:
-            raise serializers.ValidationError({"error": f"Error creating user: {str(e)}"})
+        username = validated_data['username']
+        email = validated_data['email']
+        phone = validated_data['phone']
+        user = User.objects.create(
+            username = username,
+            email = email,
+            phone = phone
+        )
+        password = validated_data['password']
+        user.set_password(password)
+        user.save()
         profile_instance, created = Profile.objects.get_or_create(user=user, defaults=profile_data)
         if not created:
             for attr, value in profile_data.items():
                 setattr(profile_instance, attr, value)
-            profile_instance.save()
+            profile_instance.save()    
         return {'user': user, 'profile': profile_instance}
-    
-    def to_representation(self, instance):
-        user = instance['user']
-        profile = instance['profile']
-        user_data = super(UserRegistrationSerializer, self).to_representation(user)
-        profile_data = ProfileSerializer(profile).data if profile else None
-        user_data['profile'] = profile_data
-        return user_data
+    # def to_representation(self, instance):
+    #     user = instance['user']
+    #     profile = instance['profile']
+    #     user_data = super(UserRegistrationSerializer, self).to_representation(user)
+    #     profile_data = ProfileSerializer(profile).data if profile else None
+    #     user_data['profile'] = profile_data
+    #     return user_data

@@ -5,10 +5,9 @@ from rest_framework.permissions import AllowAny,IsAuthenticated
 from users_auth.models import Profile
 from project import settings
 from chat.models import User
-from .serializers import ProfileSerializer, UserRegistrationSerializer, UserUpdateSerializer
+from .serializers import ProfileSerializer, UserRegistrationSerializer, UserUpdateSerializer, UsersSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -16,7 +15,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str 
 from rest_framework.exceptions import ValidationError
-
+from rest_framework_simplejwt.tokens import RefreshToken
 # Create your views here.
 
 
@@ -27,7 +26,14 @@ class SignUpView(APIView):
             serializer = UserRegistrationSerializer(data=request.data)
             if serializer.is_valid():
                 result = serializer.save()
-                return Response(serializer.to_representation(result), status=status.HTTP_201_CREATED)
+                user_data = get_auth_for_user(result['user'])
+                profile_data = ProfileSerializer(result['profile']).data
+                response_data = {
+                    'user_data':user_data,
+                    'profile':profile_data
+                }
+                
+                return Response(response_data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -79,7 +85,15 @@ class ResentOTP(APIView):
         except Exception as e:
             return Response({"error":str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
             
-
+def get_auth_for_user(user):
+    tokens = RefreshToken.for_user(user) 
+    return {
+        'user':UsersSerializer(user).data,
+        'tokens':{
+            'refresh': str(tokens),
+            'access': str(tokens.access_token),
+        }
+    }
         
 
 class LoginView(APIView):
@@ -101,12 +115,12 @@ class LoginView(APIView):
                 return Response({'error':"invalid cridentials"},status=status.HTTP_401_UNAUTHORIZED) 
         if not user.check_password(password):
             return Response({'error':"invalid cridentials"},status=status.HTTP_401_UNAUTHORIZED)  
-        refresh = RefreshToken.for_user(user)
-               
+        
+        user_data = get_auth_for_user(user)
+                       
         response_data = {
             'message':"Login Successfully",
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
+            'user_data':user_data,
             'username': user.username,
             'user_id': user.id,
             'user_email': user.email,
